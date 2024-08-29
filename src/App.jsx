@@ -3,8 +3,19 @@ import { Suspense, useState } from "react";
 import SpinLoader from "./Components/SpinLoader";
 import { OrbitControls, SpotLight, useGLTF, useCubeTexture, Environment } from "@react-three/drei";
 import * as THREE from 'three';
-import PlayerComponent from "./Components/Character";
 import WestGate from "./Components/Westgate";
+import environmentPX from './assets/textures/environment/px.png';
+import environmentNX from './assets/textures/environment/nx.png';
+import environmentPY from './assets/textures/environment/py.png';
+import environmentNY from './assets/textures/environment/ny.png';
+import environmentPZ from './assets/textures/environment/pz.png';
+import environmentNZ from './assets/textures/environment/nz.png';
+
+// import { Character } from "./Components/Avatar";
+import { Physics } from "@react-three/rapier";
+import { CharacterControl } from "./Components/Character";
+import { Map } from "./Components/city";
+// import { Avatar } from "./Components/Avatar";
 
 
 function App() {
@@ -38,27 +49,45 @@ function App() {
       ) : (
       <Canvas
         camera={{
-          position: [17.8838, 11.2, -3.72508], 
-          fov: 75, 
+          fov: 90, 
           near: 0.001,
           far: 1000, 
         }}
         gl={{
           antialias: true,
-          logarithmicDepthBuffer: true, // Loại bỏ z-fighting
-          toneMapping: THREE.CineonToneMapping, // Ánh xạ tông màu
-          outputColorSpace: THREE.SRGBColorSpace, // Không gian màu
-          toneMappingExposure: 1.5, // Thiết lập phơi sáng
+          logarithmicDepthBuffer: true, 
+          toneMapping: THREE.CineonToneMapping,
+          outputColorSpace: THREE.SRGBColorSpace, 
+          toneMappingExposure: 1.5, 
         }}
       >
-        <OrbitControls
-          enablePan={false}
-          maxDistance={6}
-          enableDamping={true}
-          dampingFactor={0.1}
-        />
+    <ambientLight intensity={0.5} />
+ 
+  <spotLight
+            position={[10, 10, 10]}
+            angle={0.15}
+            penumbra={1}
+            intensity={2}
+            castShadow
+          />
+   
         <Suspense fallback={<SpinLoader />}>
-          <WestGate />
+        <Environment files={[
+        environmentPX,
+        environmentNX,
+        environmentPY,
+        environmentNY,
+        environmentPZ,
+        environmentNZ
+      ]} background />
+      
+      <Physics debug>
+              <WestGate  position={[5, -14, 15]} />
+              {/* <Map
+          scale={3}
+          position={[-6, -10, 0]} /> */}
+              <CharacterControl />
+            </Physics>
         </Suspense>
       </Canvas>
       )}
