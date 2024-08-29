@@ -1,7 +1,6 @@
 
 import { OrbitControls, SpotLight, useGLTF, useCubeTexture, Environment } from "@react-three/drei";
 import * as THREE from 'three';
-import femaleGLB from '../assets/models/asian_female_animated.glb';
 // Import environment cubemap
 import environmentPX from '../assets/textures/environment/px.png';
 import environmentNX from '../assets/textures/environment/nx.png';
@@ -9,6 +8,7 @@ import environmentPY from '../assets/textures/environment/py.png';
 import environmentNY from '../assets/textures/environment/ny.png';
 import environmentPZ from '../assets/textures/environment/pz.png';
 import environmentNZ from '../assets/textures/environment/nz.png';
+
  // Import models
   import screenGLB from '../assets/models/screen.glb';
   import glassGLB from '../assets/models/glass.glb';
@@ -48,32 +48,15 @@ import environmentNZ from '../assets/textures/environment/nz.png';
   // Video texture
   import videoTexture from '../assets/videos/tour.mp4';
 import { useEffect, useRef } from "react";
+import { useThree } from "@react-three/fiber";
+import { RigidBody } from "@react-three/rapier";
 
 
-function WestGate() {
-  const { scene } = useGLTF(femaleGLB);
+function WestGate({  ...props }) {
+  // const { scene } = useThree();
+
   const textureLoader = new THREE.TextureLoader();
-
-  // Load the environment cube texture
-  const environmentMap = useCubeTexture([
-    environmentPX,
-    environmentNX,
-    environmentPY,
-    environmentNY,
-    environmentPZ,
-    environmentNZ
-  ], { path: '' });
-
-  // Configure the material of the model
-  scene.traverse((object) => {
-    if (object.isMesh) {
-      // Set environment map for all mesh materials
-      object.material.envMap = environmentMap;
-      object.material.needsUpdate = true; // Ensure material updates
-    }
-  });
-
-    const { scene: screen } = useGLTF(screenGLB);
+    const { scene,scene: screen } = useGLTF(screenGLB);
     const { scene: glass } = useGLTF(glassGLB);
     const { scene: bars } = useGLTF(barsGLB);
     const { scene: brick } = useGLTF(brickGLB);
@@ -90,7 +73,7 @@ function WestGate() {
     const { scene: box } = useGLTF(boxGLB);
     const { scene: thirdfloor } = useGLTF(thirdfloorGLB);
     const { scene: collider } = useGLTF(colliderGLB);
-    colliderGLB
+    
  
   const videoRef = useRef(null);
   const videoTextureRef = useRef(null);
@@ -260,9 +243,6 @@ function WestGate() {
       map: thirdfloorTex,
   });
 });
-
-    
-    // Cleanup
     return () => {
       videoRef.current.pause();
       videoRef.current.src = "";
@@ -270,20 +250,10 @@ function WestGate() {
     };
   }, []);
     
-    // const setTexture = (model, texture) => {
-    //                     model.material = new THREE.MeshBasicMaterial({ map: texture });
-    //         };
-        
-         
-    //       scene.traverse((object) => {
-    //         if (object.isMesh) {
-    //           // Set environment map for all mesh materials
-    //           object.material.envMap = environmentMap;
-    //           object.material.needsUpdate = true; // Ensure material updates
-    //         }
-    //       });
   return (
     <>
+     
+
       <ambientLight intensity={2} />
       <directionalLight position={[1, 1, 1]} intensity={1} />
       <pointLight position={[10, 5, 10]} intensity={1} />
@@ -293,31 +263,27 @@ function WestGate() {
         penumbra={1}
         intensity={2}
       />
-      <Environment files={[
-        environmentPX,
-        environmentNX,
-        environmentPY,
-        environmentNY,
-        environmentPZ,
-        environmentNZ
-      ]} background />
-      {/* <Westgate /> */}
-     <primitive object={screen} />
-      <primitive object={glass} />
-      <primitive object={bars} />
-      <primitive object={brick} />
-     <primitive object={buildings} />
-      <primitive object={easter} />
-      <primitive object={everything} />
-      <primitive object={floor} />
-      <primitive object={grass} />
-      <primitive object={other} />
-      <primitive object={outside} />
-      <primitive object={panera} />
-      <primitive object={plastic} />
-      <primitive object={tables} />
-      <primitive object={box} /> 
-       <primitive object={thirdfloor} /> 
+        <RigidBody type="fixed" colliders="trimesh">
+  <group>
+          <primitive {...props} object={screen} />
+          <primitive {...props} object={glass} />
+          <primitive {...props} object={bars} />
+          <primitive {...props} object={brick} />
+          <primitive {...props} object={buildings} />
+          <primitive {...props} object={easter} />
+          <primitive {...props} object={everything} />
+          <primitive {...props} object={floor} />
+          <primitive  {...props}object={grass} />
+          <primitive {...props} object={other} />
+          <primitive {...props} object={outside} />
+          <primitive {...props} object={panera} />
+          <primitive {...props} object={plastic} />
+          <primitive {...props} object={tables} />
+          <primitive {...props} object={box} />
+          <primitive  {...props}object={thirdfloor} />      
+      </group>
+      </RigidBody>
+
     </>
   );
 }
