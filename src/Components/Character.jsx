@@ -1,11 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Vector3, MathUtils, Raycaster } from 'three';
+import { MathUtils, Vector3 } from 'three';
 import { CapsuleCollider, RigidBody } from "@react-three/rapier";
 import { useKeyboardControls } from "./useKeyboardControls";
 import { Avatar } from "./Avatar";
-import { OrbitControls } from "@react-three/drei";
-
 const normalizeAngle = (angle) => {
   while (angle > Math.PI) angle -= 2 * Math.PI;
   while (angle < -Math.PI) angle += 2 * Math.PI;
@@ -27,6 +25,7 @@ const lerpAngle = (start, end, t) => {
 export function CharacterControl({ octree }) {
   const characterRef = useRef(null);
   const container = useRef(null);
+  const camera = useRef(null);
   const cameraTarget = useRef(null);
   const cameraPosition = useRef(null);
   const [animation, setAnimation] = useState("Running");
@@ -37,7 +36,21 @@ export function CharacterControl({ octree }) {
   const GRAVITY = -9.81;
   const JUMP_FORCE = 5;
   const RUN_SPEED = 4.5;
-  const raycaster = useRef(new Raycaster()).current; // Use a ref to avoid creating a new Raycaster on every frame
+
+  useEffect(() => {
+    const handleMouseMove = (event) => {
+      const { movementX, movementY } = event;
+      if (camera.current) {
+        camera.current.rotation.y -= movementX * 0.002; // Điều chỉnh hệ số để thay đổi độ nhạy
+        camera.current.rotation.x -= movementY * 0.002;
+        camera.current.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.current.rotation.x)); // Giới hạn góc nhìn dọc
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   useFrame(({ camera, scene }) => {
     if (rb.current) {
@@ -51,22 +64,10 @@ export function CharacterControl({ octree }) {
       if (keys["KeyD"]) movement.x = -1;
 
       if (movement.length() > 0) {
-        rotationTarget.current += 0.02 * movement.x;
+        rotationTarget.current += 0.05 * movement.x; // Tăng tốc độ xoay của container
         characterRotationTarget.current = Math.atan2(movement.x, movement.z);
         vel.x = Math.sin(rotationTarget.current + characterRotationTarget.current) * speed;
         vel.z = Math.cos(rotationTarget.current + characterRotationTarget.current) * speed;
-
-        // Update the Raycaster to check for collisions
-        // raycaster.ray.origin.copy(characterRef.current.position);
-        // raycaster.ray.direction.set(0, -1, 0); // Check downwards for ground collisions
-        // const intersects = raycaster.intersectObject(octree, true);
-
-        // if (intersects.length > 0) {
-        //   const intersection = intersects[0];
-        //   if (intersection.object.name === "3Rd Floor_Baked") {
-        //     vel.y = 2; // Adjust this value as needed
-        //   }
-        // }
 
         setAnimation(speed === RUN_SPEED ? "Running" : "Walking");
       } else {
@@ -82,22 +83,21 @@ export function CharacterControl({ octree }) {
       vel.y += GRAVITY * 0.1;
 
       if (characterRef.current) {
-        characterRef.current.rotation.y = lerpAngle(characterRef.current.rotation.y, characterRotationTarget.current, 0.1);
+        characterRef.current.rotation.y = lerpAngle(characterRef.current.rotation.y, characterRotationTarget.current, 0.3); // Tăng hệ số lerp
       }
 
       rb.current.setLinvel(vel, true);
     }
 
     if (animation !== "Idle") {
-      container.current.rotation.y = MathUtils.lerp(container.current.rotation.y, rotationTarget.current, 0.1);
+      container.current.rotation.y = MathUtils.lerp(container.current.rotation.y, rotationTarget.current, 0.1); // Tăng hệ số lerp
       cameraPosition.current.getWorldPosition(camera.position);
-      camera.position.lerp(camera.position, 0.1);
+      camera.position.lerp(camera.position, 0.1); // Tăng hệ số lerp
       const cameraLookAt = new Vector3();
       cameraTarget.current.getWorldPosition(cameraLookAt);
       camera.lookAt(cameraLookAt);
     }
-  }
-  );
+  });
 
   return (
     <>
@@ -111,6 +111,7 @@ export function CharacterControl({ octree }) {
         </group>
         <CapsuleCollider args={[0.1, 0.3]} />
       </RigidBody>
+      <perspectiveCamera ref={camera} position={[0, 2, 5]} />
     </>
   );
 }
