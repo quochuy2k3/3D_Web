@@ -1,7 +1,6 @@
-
 import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Vector3, MathUtils } from 'three';
+import { Vector3, MathUtils, Raycaster } from 'three';
 import { CapsuleCollider, RigidBody } from "@react-three/rapier";
 import { useKeyboardControls } from "./useKeyboardControls";
 import { Avatar } from "./Avatar";
@@ -25,54 +24,62 @@ const lerpAngle = (start, end, t) => {
   return normalizeAngle(start + (end - start) * t);
 };
 
-export function CharacterControl() {
+export function CharacterControl({ octree }) {
   const characterRef = useRef(null);
   const container = useRef(null);
   const cameraTarget = useRef(null);
   const cameraPosition = useRef(null);
-  const [animation, setAnimation] = useState("idle");
+  const [animation, setAnimation] = useState("Running");
   const keys = useKeyboardControls();
   const rb = useRef(null);
   const rotationTarget = useRef(0);
   const characterRotationTarget = useRef(0);
-  const [currentAction,setCurrentAction] = useState("Doing")
   const GRAVITY = -9.81;
   const JUMP_FORCE = 5;
-  const RUN_SPEED = 1.6;
+  const RUN_SPEED = 4.5;
+  const raycaster = useRef(new Raycaster()).current; // Use a ref to avoid creating a new Raycaster on every frame
 
-  useFrame(({ camera }) => {
+  useFrame(({ camera, scene }) => {
     if (rb.current) {
       const vel = rb.current.linvel();
       const movement = new Vector3();
-      let speed = keys["ShiftLeft"] ? RUN_SPEED : 1;
+      let speed = keys["ShiftLeft"] ? RUN_SPEED : 3;
 
       if (keys["KeyW"]) movement.z = 1;
       if (keys["KeyS"]) movement.z = -1;
       if (keys["KeyA"]) movement.x = 1;
       if (keys["KeyD"]) movement.x = -1;
-    
+
       if (movement.length() > 0) {
         rotationTarget.current += 0.02 * movement.x;
         characterRotationTarget.current = Math.atan2(movement.x, movement.z);
         vel.x = Math.sin(rotationTarget.current + characterRotationTarget.current) * speed;
         vel.z = Math.cos(rotationTarget.current + characterRotationTarget.current) * speed;
+
+        // Update the Raycaster to check for collisions
+        // raycaster.ray.origin.copy(characterRef.current.position);
+        // raycaster.ray.direction.set(0, -1, 0); // Check downwards for ground collisions
+        // const intersects = raycaster.intersectObject(octree, true);
+
+        // if (intersects.length > 0) {
+        //   const intersection = intersects[0];
+        //   if (intersection.object.name === "3Rd Floor_Baked") {
+        //     vel.y = 2; // Adjust this value as needed
+        //   }
+        // }
+
         setAnimation(speed === RUN_SPEED ? "Running" : "Walking");
-        setCurrentAction("Doing")
       } else {
         setAnimation("Idle");
-        setCurrentAction("Idle")
       }
+
       if (keys["Space"]) {
-        console.log(Math.abs(rb.current.translation().y));
-        // if (Math.abs(rb.current.translation().y) < 0.1) {
-          vel.y = JUMP_FORCE;
-          setAnimation("Jump");
-        // }
+        vel.y = JUMP_FORCE;
+        setAnimation("Jump");
       }
 
-
-      // Áp dụng trọng lực
-      vel.y += GRAVITY * 0.1; // điều chỉnh sức mạnh của trọng lực và thời gian delta nếu cần
+      // Apply gravity
+      vel.y += GRAVITY * 0.1;
 
       if (characterRef.current) {
         characterRef.current.rotation.y = lerpAngle(characterRef.current.rotation.y, characterRotationTarget.current, 0.1);
@@ -81,7 +88,7 @@ export function CharacterControl() {
       rb.current.setLinvel(vel, true);
     }
 
-    if(currentAction == "Doing" ){
+    if (animation !== "Idle") {
       container.current.rotation.y = MathUtils.lerp(container.current.rotation.y, rotationTarget.current, 0.1);
       cameraPosition.current.getWorldPosition(camera.position);
       camera.position.lerp(camera.position, 0.1);
@@ -89,7 +96,8 @@ export function CharacterControl() {
       cameraTarget.current.getWorldPosition(cameraLookAt);
       camera.lookAt(cameraLookAt);
     }
-  });
+  }
+  );
 
   return (
     <>
@@ -98,10 +106,10 @@ export function CharacterControl() {
           <group ref={cameraTarget} position-z={1.5} />
           <group ref={cameraPosition} position-y={4} position-z={-4} />
           <group ref={characterRef}>
-            <Avatar scale={1} position-y={0.25} animation={animation} /> 
+            <Avatar scale={1} position-y={-0.35} animation={animation} />
           </group>
         </group>
-        <CapsuleCollider args={[0.08, 0.15]} />
+        <CapsuleCollider args={[0.1, 0.3]} />
       </RigidBody>
     </>
   );

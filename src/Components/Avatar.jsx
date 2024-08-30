@@ -1,4 +1,4 @@
-import { useAnimations, useGLTF } from "@react-three/drei";
+import { OrbitControls, useAnimations, useGLTF } from "@react-three/drei";
 import React, { useEffect, useRef } from "react";
 import character from '../assets/models/asian_female_animated.glb';
 
@@ -10,7 +10,6 @@ export function Avatar({ animation, ...props }) {
     actions[animation]?.reset().fadeIn(0.24).play();
     return () => actions?.[animation]?.fadeOut(0.24);
   }, [animation]);
-console.log(animationsAvatar);
 
   return (
     <group  ref={group} {...props} dispose={null}>

@@ -49,10 +49,10 @@ import environmentNZ from '../assets/textures/environment/nz.png';
   import videoTexture from '../assets/videos/tour.mp4';
 import { useEffect, useRef } from "react";
 import { useThree } from "@react-three/fiber";
-import { RigidBody } from "@react-three/rapier";
+import { CapsuleCollider, RigidBody } from "@react-three/rapier";
 
 
-function WestGate({  ...props }) {
+function WestGate({octree,  ...props }) {
   // const { scene } = useThree();
 
   const textureLoader = new THREE.TextureLoader();
@@ -77,6 +77,7 @@ function WestGate({  ...props }) {
  
   const videoRef = useRef(null);
   const videoTextureRef = useRef(null);
+
   useEffect(() => {
     // Create video element
     videoRef.current = document.createElement("video");
@@ -100,9 +101,9 @@ function WestGate({  ...props }) {
       screen.children[0].material = new THREE.MeshBasicMaterial({ map: videoTextureRef.current });
     }
     screen.children[0].material.flipY = false;
-    const octree = new Octree();
-    octree.fromGraphNode(collider);
 
+    octree.fromGraphNode(collider);
+    console.log(octree);
     glass.children.forEach((child) => {
       child.material = new THREE.MeshPhysicalMaterial();
       child.material.roughness = 0;
@@ -124,10 +125,12 @@ function WestGate({  ...props }) {
         const barsTex= textureLoader.load(barsTexture);
         barsTex.flipY = false;
         barsTex.colorSpace = THREE.SRGBColorSpace;
-          child.material = new THREE.MeshBasicMaterial({
+        child.material = new THREE.MeshBasicMaterial({
               map: barsTex,
           });
+          child.name =  "Bars";
       });
+      bars.name = "Bars";
 
       brick.children.forEach((child) => {
         const brickTex= textureLoader.load(brickTexture);
@@ -226,12 +229,18 @@ function WestGate({  ...props }) {
         map: plasticTex,
     });
 });
-  tables.children.forEach((child) => {
+tables.children.forEach((child) => {
   const tablesTex= textureLoader.load(tablesTexture);
   tablesTex.flipY = false;
   tablesTex.colorSpace =THREE.SRGBColorSpace;
   child.material = new THREE.MeshBasicMaterial({
       map: tablesTex,
+  });
+});
+collider.children.forEach((child) => {
+  child.material = new THREE.MeshBasicMaterial({
+    transparent: true,
+    opacity: 0,
   });
 });
 
@@ -263,11 +272,11 @@ function WestGate({  ...props }) {
         penumbra={1}
         intensity={2}
       />
-        <RigidBody type="fixed" colliders="trimesh">
   <group>
           <primitive {...props} object={screen} />
-          <primitive {...props} object={glass} />
           <primitive {...props} object={bars} />
+        <RigidBody type="fixed" colliders="trimesh">
+          <primitive {...props} object={glass} />
           <primitive {...props} object={brick} />
           <primitive {...props} object={buildings} />
           <primitive {...props} object={easter} />
@@ -280,9 +289,14 @@ function WestGate({  ...props }) {
           <primitive {...props} object={plastic} />
           <primitive {...props} object={tables} />
           <primitive {...props} object={box} />
-          <primitive  {...props}object={thirdfloor} />      
-      </group>
+          <primitive  {...props}object={thirdfloor} /> 
+          <RigidBody type="fixed" colliders="trimesh">
+              <primitive {...props} object={collider} />
+          </RigidBody>
+
       </RigidBody>
+
+      </group>
 
     </>
   );
