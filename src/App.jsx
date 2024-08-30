@@ -15,13 +15,14 @@ import environmentNZ from './assets/textures/environment/nz.png';
 import { Physics } from "@react-three/rapier";
 import { CharacterControl } from "./Components/Character";
 import { Map } from "./Components/city";
+import { Octree } from "three/examples/jsm/math/Octree";
 // import { Avatar } from "./Components/Avatar";
 
 
 function App() {
   const [playerName, setPlayerName] = useState("");
   const [nameSubmitted, setNameSubmitted] = useState(false);
-
+  const octree = new Octree();
   const handleNameSubmit = () => {
     if (playerName.trim()) {
       setNameSubmitted(true);
@@ -82,11 +83,11 @@ function App() {
       ]} background />
       
       <Physics debug>
-              <WestGate  position={[5, -14, 15]} />
+              <WestGate octree={octree} position={[5, -14, 11]} />
               {/* <Map
           scale={3}
           position={[-6, -10, 0]} /> */}
-              <CharacterControl />
+              <CharacterControl octree={octree} />
             </Physics>
         </Suspense>
       </Canvas>
